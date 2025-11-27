@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reportes de Robos</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        .stats-header {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .stat-badge strong {
+            font-size: 18px;
+            display: block;
+        }
+
+        /* Contenedor principal */
+        .container {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        /* Panel lateral */
+        .sidebar {
+            width: 380px;
+            background-color: white;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        }
+
+        .sidebar-section {
+            padding: 25px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sidebar-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Instrucciones */
+        .instructions {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        /* Formulario */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        /* Botones */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Lista de reportes */
+        .reportes-lista {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .reporte-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .reporte-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .reporte-tipo {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .reporte-desc {
+            font-size: 13px;
+            color: #555;
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .reporte-fecha {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        /* Mapa */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Controles del mapa */
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-btn {
+            background: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        .map-btn:hover {
+            background-color: #f0f0f0;
+            transform: scale(1.1);
+        }
+
+        /* Scrollbar personalizado */
+        .sidebar::-webkit-scrollbar,
+        .reportes-lista::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track,
+        .reportes-lista::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb,
+        .reportes-lista::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover,
+        .reportes-lista::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Animación de pulso para marcador temporal */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1> Sistema de Reportes de Robos en Tiempo Real</h1>
+            <p>Proyecto de Ingeniería de Sistemas - Día 1</p>
+        </div>
+        <div class="stats-header">
+            <div class="stat-badge">
+                <strong id="totalReportes">0</strong>
+                <span>Reportes</span>
+            </div>
+            <div class="stat-badge">
+                <strong id="reportesHoy">0</strong>
+                <span>Hoy</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Instrucciones -->
+            <div class="sidebar-section">
+                <div class="instructions">
+                    <h3> ¿Cómo reportar?</h3>
+                    <ol>
+                        <li>Haz clic en el mapa para seleccionar la ubicación</li>
+                        <li>Completa el formulario con los detalles</li>
+                        <li>Presiona "Reportar Robo"</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="sidebar-section">
+                <h2> Nuevo Reporte</h2>
+                <form id="reporteForm">
+                    <div class="form-group">
+                        <label for="tipoRobo">Tipo de Robo *</label>
+                        <select id="tipoRobo" required>
+                            <option value="">Selecciona un tipo...</option>
+                            <option value="vehiculo"> Robo de Vehículo</option>
+                            <option value="persona"> Robo a Persona</option>
+                            <option value="residencia"> Robo a Residencia</option>
+                            <option value="comercio"> Robo a Comercio</option>
+                            <option value="moto">Robo de Motocicleta</option>
+                            <option value="celular"> Robo de Celular</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion">Descripción del incidente *</label>
+                        <textarea 
+                            id="descripcion" 
+                            placeholder="Describe lo que ocurrió: hora aproximada, cantidad de personas, etc."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha">Fecha y Hora del incidente *</label>
+                        <input type="datetime-local" id="fecha" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="coordenadas">Coordenadas (Lat, Lng)</label>
+                        <input 
+                            type="text" 
+                            id="coordenadas" 
+                            readonly 
+                            placeholder="Haz clic en el mapa para seleccionar"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Reportar Robo
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">
+                        Limpiar Formulario
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de reportes -->
+            <div class="sidebar-section">
+                <h2> Reportes Recientes</h2>
+                <div class="reportes-lista" id="listaReportes">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"></div>
+                        <p>No hay reportes todavía</p>
+                        <p style="font-size: 12px; margin-top: 5px;">Los reportes aparecerán aquí</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mapa -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Controles del mapa -->
+            <div class="map-controls">
+                <button class="map-btn" onclick="centrarMapa()" title="Centrar mapa"></button>
+                <button class="map-btn" onclick="verTodosReportes()" title="Ver todos los reportes"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet para generar el mapa -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    
+    <script>
+        console.log('Iniciando aplicación...');
+
+        // ============================================
+        // CONFIGURACIÓN DEL MAPA
+        // ============================================
+        
+        const CENTRO_INICIAL = [4.637405, -74.083576]; // centrado en la unal 
+        const ZOOM_INICIAL = 12;
+        
+        const map = L.map('map').setView(CENTRO_INICIAL, ZOOM_INICIAL);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        console.log('Mapa inicializado');
+
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        
+        let reportes = [];
+        let marcadorTemporal = null;
+        let ubicacionSeleccionada = null;
+        let marcadores = []; // Para guardar referencia de todos los marcadores
+
+        // ============================================
+        // ICONOS PERSONALIZADOS
+        // ============================================
+        
+        const iconos = {
+            vehiculo: L.divIcon({
+                html: '<div style="background: #e74c3c; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">🚗</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                className: ''
+            }),
+            persona: L.divIcon({
+                html: '<div style="background: #f39c12; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">👤</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                className: ''
+            }),
+            residencia: L.divIcon({
+                html: '<div style="background: #9b59b6; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">🏠</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                className: ''
+            }),
+            comercio: L.divIcon({
+                html: '<div style="background: #e67e22; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">🏪</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                className: ''
+            }),
+            moto: L.divIcon({
+                html: '<div style="background: #16a085; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">🏍️</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                className: ''
+            }),
+            celular: L.divIcon({
+                html: '<div style="background: #3498db; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);">📱</div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                className: ''
+            })
+        };
+
+        // ============================================
+        // EVENTO: CLIC EN EL MAPA
+        // ============================================
+        
+        map.on('click', function(e) {
+            ubicacionSeleccionada = e.latlng;
+            
+            document.getElementById('coordenadas').value = 
+                `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+            
+            if (marcadorTemporal) {
+                map.removeLayer(marcadorTemporal);
+            }
+            
+            marcadorTemporal = L.marker(e.latlng, {
+                icon: L.divIcon({
+                    html: '<div style="background: #2ecc71; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3); animation: pulse 1.5s infinite;">📍</div>',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18],
+                    className: ''
+                })
+            }).addTo(map);
+            
+            console.log('Ubicación seleccionada:', e.latlng);
+        });
+
+        // ============================================
+        // ENVÍO DEL FORMULARIO
+        // ============================================
+        
+        document.getElementById('reporteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!ubicacionSeleccionada) {
+                alert('Por favor, selecciona una ubicación en el mapa haciendo clic');
+                return;
+            }
+            
+            const nuevoReporte = {
+                id: Date.now(),
+                tipo: document.getElementById('tipoRobo').value,
+                descripcion: document.getElementById('descripcion').value,
+                fecha: document.getElementById('fecha').value,
+                latitud: ubicacionSeleccionada.lat,
+                longitud: ubicacionSeleccionada.lng,
+                fechaCreacion: new Date().toISOString()
+            };
+            
+            reportes.push(nuevoReporte);
+            agregarMarcadorMapa(nuevoReporte);
+            actualizarEstadisticas();
+            actualizarListaReportes();
+            guardarReportes();
+            limpiarFormulario();
+            
+            alert(' Reporte agregado exitosamente');
+            console.log(' Nuevo reporte:', nuevoReporte);
+        });
+
+        // ============================================
+        // AGREGAR MARCADOR AL MAPA
+        // ============================================
+        
+        function agregarMarcadorMapa(reporte) {
+            if (marcadorTemporal) {
+                map.removeLayer(marcadorTemporal);
+                marcadorTemporal = null;
+            }
+            
+            const icono = iconos[reporte.tipo] || iconos.vehiculo;
+            const marcador = L.marker([reporte.latitud, reporte.longitud], {
+                icon: icono
+            }).addTo(map);
+            
+            const fechaIncidente = new Date(reporte.fecha);
+            const fechaReporte = new Date(reporte.fechaCreacion);
+            
+            const popupContent = `
+                <div style="min-width: 220px; font-family: Arial, sans-serif;">
+                    <h3 style="margin: 0 0 12px 0; color: #667eea; font-size: 16px;">
+                        ${obtenerNombreTipo(reporte.tipo)}
+                    </h3>
+                    <p style="margin: 8px 0; font-size: 14px; line-height: 1.4;">
+                        <strong>Descripción:</strong><br>
+                        ${reporte.descripcion}
+                    </p>
+                    <p style="margin: 8px 0; font-size: 13px; color: #666;">
+                        <strong>Fecha del incidente:</strong><br>
+                        ${fechaIncidente.toLocaleDateString('es-CO', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #999; padding-top: 8px; border-top: 1px solid #eee;">
+                        Reportado: ${fechaReporte.toLocaleDateString('es-CO')}
+                    </p>
+                </div>
+            `;
+            
+            marcador.bindPopup(popupContent);
+            marcadores.push(marcador);
+        }
+
+        // ============================================
+        // ACTUALIZAR LISTA DE REPORTES
+        // ============================================
+        
+        function actualizarListaReportes() {
+            const lista = document.getElementById('listaReportes');
+            
+            if (reportes.length === 0) {
+                lista.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay reportes todavía</p>
+                        <p style="font-size: 12px; margin-top: 5px;">Los reportes aparecerán aquí</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const ultimosReportes = reportes.slice(-10).reverse();
+            
+            lista.innerHTML = ultimosReportes.map((reporte, index) => {
+                const fecha = new Date(reporte.fecha);
+                return `
+                    <div class="reporte-item" onclick="centrarEnReporte(${reporte.id})">
+                        <div class="reporte-tipo">
+                            ${obtenerNombreTipo(reporte.tipo)}
+                        </div>
+                        <div class="reporte-desc">
+                            ${reporte.descripcion.substring(0, 100)}${reporte.descripcion.length > 100 ? '...' : ''}
+                        </div>
+                        <div class="reporte-fecha">
+                            <span>${fecha.toLocaleDateString('es-CO')}</span>
+                            <span>${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // ACTUALIZAR ESTADÍSTICAS
+        // ============================================
+        
+        function actualizarEstadisticas() {
+            document.getElementById('totalReportes').textContent = reportes.length;
+            
+            const hoy = new Date().toDateString();
+            const reportesHoy = reportes.filter(r => {
+                const fechaReporte = new Date(r.fechaCreacion);
+                return fechaReporte.toDateString() === hoy;
+            }).length;
+            
+            document.getElementById('reportesHoy').textContent = reportesHoy;
+        }
+
+        // ============================================
+        // FUNCIONES AUXILIARES
+        // ============================================
+        
+        function obtenerNombreTipo(tipo) {
+            const nombres = {
+                vehiculo: ' Robo de Vehículo',
+                persona: ' Robo a Persona',
+                residencia: ' Robo a Residencia',
+                comercio: ' Robo a Comercio',
+                moto: ' Robo de Motocicleta',
+                celular: ' Robo de Celular'
+            };
+            return nombres[tipo] || 'Robo';
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('reporteForm').reset();
+            document.getElementById('coordenadas').value = '';
+            document.getElementById('fecha').value = new Date().toISOString().slice(0, 16);
+            ubicacionSeleccionada = null;
+            
+            if (marcadorTemporal) {
+                map.removeLayer(marcadorTemporal);
+                marcadorTemporal = null;
+            }
+        }
+
+        function centrarMapa() {
+            map.setView(CENTRO_INICIAL, ZOOM_INICIAL);
+        }
+
+        function verTodosReportes() {
+            if (reportes.length === 0) {
+                alert('No hay reportes para mostrar');
+                return;
+            }
+            
+            const coordenadas = reportes.map(r => [r.latitud, r.longitud]);
+            const bounds = L.latLngBounds(coordenadas);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function centrarEnReporte(reporteId) {
+            const reporte = reportes.find(r => r.id === reporteId);
+            if (reporte) {
+                map.setView([reporte.latitud, reporte.longitud], 16);
+                
+                const marcador = marcadores.find(m => {
+                    const pos = m.getLatLng();
+                    return pos.lat === reporte.latitud && pos.lng === reporte.longitud;
+                });
+                
+                if (marcador) {
+                    marcador.openPopup();
+                }
+            }
+        }
+
+        // ============================================
+        // PERSISTENCIA CON LOCALSTORAGE
+        // ============================================
+        
+        function guardarReportes() {
+            try {
+                localStorage.setItem('reportes', JSON.stringify(reportes));
+                console.log(' Reportes guardados');
+            } catch (e) {
+                console.error('Error guardando reportes:', e);
+            }
+        }
+
+        function cargarReportes() {
+            try {
+                const datosGuardados = localStorage.getItem('reportes');
+                if (datosGuardados) {
+                    reportes = JSON.parse(datosGuardados);
+                    reportes.forEach(reporte => agregarMarcadorMapa(reporte));
+                    actualizarEstadisticas();
+                    actualizarListaReportes();
+                    console.log(` ${reportes.length} reportes cargados`);
+                }
+            } catch (e) {
+                console.error('Error cargando reportes:', e);
+            }
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        
+        document.getElementById('fecha').value = new Date().toISOString().slice(0, 16);
+        cargarReportes();
+        
+        console.log(' Aplicación lista');
+        console.log(' Haz clic en el mapa para comenzar');
+    </script>
+</body>
+</html>
