@@ -22,7 +22,7 @@
             overflow: hidden;
         }
 
-        /* Header */
+        /* parte superior que hace un degradado de azul a morado */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -67,7 +67,7 @@
             height: calc(100vh - 70px);
         }
 
-        /* Panel lateral */
+        /* Panel lateral donde se hace el reporte */
         .sidebar {
             width: 380px;
             background-color: white;
@@ -312,7 +312,7 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- parte superior texto -->
     <div class="header">
         <div>
             <h1> Sistema de Reportes de Robos en Tiempo Real</h1>
@@ -331,7 +331,7 @@
     </div>
 
     <div class="container">
-        <!-- Sidebar -->
+        <!-- parte lateral  -->
         <div class="sidebar">
             <!-- Instrucciones -->
             <div class="sidebar-section">
@@ -426,9 +426,9 @@
     <script>
         console.log('Iniciando aplicación...');
 
-        // ============================================
+        
         // CONFIGURACIÓN DEL MAPA
-        // ============================================
+        
         
         const CENTRO_INICIAL = [4.637405, -74.083576]; // centrado en la unal 
         const ZOOM_INICIAL = 12;
@@ -442,18 +442,18 @@
 
         console.log('Mapa inicializado');
 
-        // ============================================
+        
         // VARIABLES GLOBALES
-        // ============================================
+        
         
         let reportes = [];
         let marcadorTemporal = null;
         let ubicacionSeleccionada = null;
         let marcadores = []; // Para guardar referencia de todos los marcadores
 
-        // ============================================
+        
         // ICONOS PERSONALIZADOS
-        // ============================================
+       
         
         const iconos = {
             vehiculo: L.divIcon({
@@ -494,9 +494,9 @@
             })
         };
 
-        // ============================================
+        
         // EVENTO: CLIC EN EL MAPA
-        // ============================================
+        
         
         map.on('click', function(e) {
             ubicacionSeleccionada = e.latlng;
@@ -520,9 +520,9 @@
             console.log('Ubicación seleccionada:', e.latlng);
         });
 
-        // ============================================
+        
         // ENVÍO DEL FORMULARIO
-        // ============================================
+        
         
         document.getElementById('reporteForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -553,9 +553,9 @@
             console.log(' Nuevo reporte:', nuevoReporte);
         });
 
-        // ============================================
+        
         // AGREGAR MARCADOR AL MAPA
-        // ============================================
+        
         
         function agregarMarcadorMapa(reporte) {
             if (marcadorTemporal) {
@@ -601,9 +601,9 @@
             marcadores.push(marcador);
         }
 
-        // ============================================
+        
         // ACTUALIZAR LISTA DE REPORTES
-        // ============================================
+         
         
         function actualizarListaReportes() {
             const lista = document.getElementById('listaReportes');
@@ -611,7 +611,7 @@
             if (reportes.length === 0) {
                 lista.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-icon"></div>
                         <p>No hay reportes todavía</p>
                         <p style="font-size: 12px; margin-top: 5px;">Los reportes aparecerán aquí</p>
                     </div>
