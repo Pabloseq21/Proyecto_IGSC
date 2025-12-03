@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 import database as db
+import predicciones as pred
 
 # CONFIGURACIÓN DE FLASK
 
@@ -388,6 +389,67 @@ def internal_error(error):
         'success': False,
         'error': 'Error interno del servidor'
     }), 500
+    
+@app.route('/api/predicciones', methods=['GET'])
+def obtener_predicciones():
+    """Obtener todas las predicciones"""
+    try:
+        predicciones = pred.generar_reporte_completo()
+        
+        return jsonify({
+            'success': True,
+            'data': predicciones
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/predicciones/zonas-riesgo', methods=['GET'])
+def obtener_zonas_riesgo():
+    """Obtener solo zonas de riesgo"""
+    try:
+        zonas = pred.calcular_zonas_riesgo()
+        
+        return jsonify({
+            'success': True,
+            'data': zonas,
+            'total': len(zonas)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/predicciones/ubicacion', methods=['POST'])
+def predecir_ubicacion():
+    """Predecir riesgo de una ubicación específica"""
+    try:
+        datos = request.get_json()
+        
+        if 'latitud' not in datos or 'longitud' not in datos:
+            return jsonify({
+                'success': False,
+                'error': 'Se requieren latitud y longitud'
+            }), 400
+        
+        prediccion = pred.predecir_riesgo_ubicacion(
+            float(datos['latitud']),
+            float(datos['longitud'])
+        )
+        
+        return jsonify({
+            'success': True,
+            'data': prediccion
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 
 # INICIAR SERVIDOR=
 
